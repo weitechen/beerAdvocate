@@ -24,7 +24,9 @@ def reviewWeight(beerRDD, sc):
 	instanceCnt = beerRDD.count()
 
 	# partite RDD
-	partitionRDD = beerRDD.map(lambda x:  (x.review_overall, x.review_aroma, x.review_appearance, x.review_palate, x.review_taste)).repartition(4).cache()
+	partitionRDD = beerRDD \
+		.map(lambda x:  (x.review_overall, x.review_aroma, x.review_appearance, x.review_palate, x.review_taste)) \
+		.repartition(4).cache()
 
 	def computingLoss(batchPartition):
 		""" Compute loss and gradients for each instance
@@ -41,13 +43,17 @@ def reviewWeight(beerRDD, sc):
 			yield tuple(gradient) + (error, )
 
 	for epoch in xrange(numOfEpoch):
-		lossRDD = partitionRDD.mapPartitions(computingLoss, preservesPartitioning = True)
+		lossRDD = partitionRDD \
+			.mapPartitions(computingLoss, preservesPartitioning = True)
 
 		# sum over all errors
-		totalError = lossRDD.mapPartitions(lambda xList: ( x[4] for x in xList)).sum() / (2*instanceCnt)
+		totalError = lossRDD \
+			.mapPartitions(lambda xList: ( x[4] for x in xList)).sum() / (2*instanceCnt)
 
 		# get delta gradients for each weight parameters
-		deltaGradient = lossRDD.mapPartitions(lambda xList: ( (x[0], x[1], x[2], x[3]) for x in xList)).reduce(lambda x, y: tuple([x[idx] + y[idx] for idx in xrange(4)]))
+		deltaGradient = lossRDD \
+			.mapPartitions(lambda xList: ( (x[0], x[1], x[2], x[3]) for x in xList)) \
+			.reduce(lambda x, y: tuple([x[idx] + y[idx] for idx in xrange(4)]))
 
 		# update weights
 		for wIdx in xrange(4):
