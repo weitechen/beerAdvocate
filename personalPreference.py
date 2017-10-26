@@ -27,7 +27,9 @@ def personalPreferenceByReviewer(beerRDD, preferenceList):
 	numOfEpoch = 10
 	learningRate = 0.01
 	reviewWeight = beerRDD.map(lambda x: (x.review_profilename, 1)).reduceByKey(sum).mapValues(lambda x: (0.25, 0.25, 0.25, 0.25, x))
+
 	for epoch in xrange(numOfEpoch):
+		print "Epoch: %d" % epoch
 		deltaRDD = beerRDD \
 			.map(lambda x: (x.review_profilename, (x.review_overall, x.review_aroma, x.review_appearance,x.review_palate,x.review_taste))) \
 			.join(reviewWeight) \
@@ -42,7 +44,6 @@ def personalPreferenceByReviewer(beerRDD, preferenceList):
 			.join(deltaRDD) \
 			.mapValues(lambda x: tuple([x[0][idx] + learningRate*x[1][idx] for idx in xrange(4)]))
 	
-	print reviewWeight.collect()
 
 if __name__ == "__main__":
 	fileName = "/Users/wtchen/Research/beerAdvocate/beer_reviews/beer_reviews.csv"
@@ -51,7 +52,7 @@ if __name__ == "__main__":
 	df = readCSVFile(fileName, spark, numOfPartition = 4)
 	rdd = df.rdd
 
-	#perferenceStyle = personalPreference(rdd, [1.0,1.0,0.0,0.0])
-	#print u"My Recommend style: {0}".format(perferenceStyle[0][0])
+	perferenceStyle = personalPreference(rdd, [1.0,1.0,0.0,0.0])
+	print u"My Recommend style: {0}".format(perferenceStyle[0][0])
 
-	personalPreferenceByReviewer(rdd, [1.0,1.0,0.0,0.0])
+	#personalPreferenceByReviewer(rdd, [1.0,1.0,0.0,0.0])
